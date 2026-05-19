@@ -15,9 +15,6 @@ import com.tigernum.app.ui.orders.OrdersScreen
 import com.tigernum.app.ui.instructions.InstructionsScreen
 import com.tigernum.app.ui.settings.SettingsScreen
 
-/**
- * Main navigation graph with smooth transitions and type-safe argument passing.
- */
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
@@ -42,7 +39,7 @@ fun AppNavGraph(
                 slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(300))
         }
     ) {
-        // Home Screen
+        // Home
         composable(Screen.Home.route) {
             HomeScreen(
                 onBuyClick = { provider, country, service ->
@@ -52,17 +49,15 @@ fun AppNavGraph(
             )
         }
 
-        // Buy Landing (bottom nav target – redirects to BuyNumber with empty args if needed)
+        // Buy Landing -> يعيد التوجيه إلى BuyNumber مع قيم افتراضية
         composable(Screen.BuyLanding.route) {
-            // Auto-navigate to actual BuyNumber with default values
-            // In real app, might show a quick setup or just redirect.
             val defaultRoute = Screen.BuyNumber.createRoute("Hero-SMS", "wa", "+20")
             navController.navigate(defaultRoute) {
                 popUpTo(Screen.Home.route) { inclusive = false }
             }
         }
 
-        // BuyNumber with arguments
+        // Buy Number مع وسائط
         composable(
             route = Screen.BuyNumber.route,
             arguments = listOf(
@@ -81,17 +76,17 @@ fun AppNavGraph(
             )
         }
 
-        // Orders Screen
+        // Orders
         composable(Screen.Orders.route) {
             OrdersScreen()
         }
 
-        // Instructions Screen
+        // Instructions
         composable(Screen.Instructions.route) {
             InstructionsScreen()
         }
 
-        // Settings Screen
+        // Settings
         composable(Screen.Settings.route) {
             SettingsScreen()
         }
