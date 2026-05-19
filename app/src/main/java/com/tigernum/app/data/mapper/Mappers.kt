@@ -17,6 +17,11 @@ fun CountryDto.toDomain() = Country(
     dialCode = dialCode
 )
 
+fun ProviderDto.toDomain() = Provider(
+    id = id,
+    name = name
+)
+
 fun OrderDto.toDomain() = Order(
     orderId = orderId,
     phoneNumber = phoneNumber,
