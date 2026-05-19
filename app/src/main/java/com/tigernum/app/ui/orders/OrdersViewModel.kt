@@ -40,6 +40,7 @@ class OrdersViewModel(application: Application) : AndroidViewModel(application) 
                         it.copy(isLoading = false, error = result.exception.message)
                     }
                 }
+                is NetworkResult.Loading -> { /* just in case */ }
             }
         }
     }
