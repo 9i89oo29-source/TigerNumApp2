@@ -10,10 +10,6 @@ import java.security.MessageDigest
  * - ANDROID_ID
  * - توقيع التطبيق (App Signature)
  * - طابع زمني لأول تثبيت
- *
- * هذه البصمة تُرسل إلى البوت الخلفي في ترويسة "X-Device-Fingerprint"
- * للتعرّف على المستخدم بدون تسجيل دخول.
- * أكثر أماناً من إرسال ANDROID_ID بشكل مباشر.
  */
 class DeviceIdProvider(private val context: Context) {
 
@@ -27,7 +23,6 @@ class DeviceIdProvider(private val context: Context) {
         val signature = getAppSignature()
         val installTimestamp = deviceManager.getOrCreateInstallTimestamp().toString()
 
-        // دمج المكونات مع فاصل لمنع التصادم
         val raw = "$androidId|$signature|$installTimestamp"
         return hashString(raw)
     }
@@ -50,26 +45,23 @@ class DeviceIdProvider(private val context: Context) {
                 )
             }
 
-            val signatures = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                packageInfo.signingInfo.apkContentsSigners
-            } else {
-                @Suppress("DEPRECATION")
-                packageInfo.signatures
-            }
+            val signatures: Array<out java.security.Signature>? = 
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    packageInfo.signingInfo?.apkContentsSigners
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageInfo.signatures
+                }
 
-            val signatureBytes = signatures.firstOrNull()?.toByteArray() ?: ByteArray(0)
+            val signatureBytes = signatures?.firstOrNull()?.toByteArray() ?: ByteArray(0)
             val md = MessageDigest.getInstance("SHA-256")
             val digest = md.digest(signatureBytes)
             digest.joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
-            // في حالة الفشل، نُعيد قيمة ثابتة (لن تتغير عبر الجلسات)
             "signature_unavailable"
         }
     }
 
-    /**
-     * يجزئ النص باستخدام SHA-256.
-     */
     private fun hashString(input: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest(input.toByteArray())
