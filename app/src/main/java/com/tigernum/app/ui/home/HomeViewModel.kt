@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.tigernum.app.data.remote.NetworkResult
 import com.tigernum.app.data.repository.BotRepository
 import com.tigernum.app.domain.model.*
-import com.tigernum.app.util.DeviceIdProvider
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,7 +36,6 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            // تنفيذ جميع الطلبات بالتوازي
             val providersDeferred = async { repository.getProviders() }
             val countriesDeferred = async { repository.getCountries() }
             val servicesDeferred = async { repository.getServices() }
@@ -47,7 +46,6 @@ class HomeViewModel(
             val servicesResult = servicesDeferred.await()
             val balanceResult = balanceDeferred.await()
 
-            // تجميع الأخطاء إن وجدت (نُظهر أول خطأ فقط)
             val errors = listOfNotNull(
                 (providersResult as? NetworkResult.Error)?.exception?.message,
                 (countriesResult as? NetworkResult.Error)?.exception?.message,
