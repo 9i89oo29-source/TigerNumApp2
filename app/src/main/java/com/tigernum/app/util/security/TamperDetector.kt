@@ -25,15 +25,16 @@ object TamperDetector {
                 )
             }
 
-            val signatures = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                packageInfo.signingInfo.apkContentsSigners
-            } else {
-                @Suppress("DEPRECATION")
-                packageInfo.signatures
-            }
+            val signatures: Array<out java.security.Signature>? = 
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    packageInfo.signingInfo?.apkContentsSigners
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageInfo.signatures
+                }
 
             val md = MessageDigest.getInstance("SHA-256")
-            val signatureBytes = signatures.firstOrNull()?.toByteArray() ?: return true
+            val signatureBytes = signatures?.firstOrNull()?.toByteArray() ?: return true
             val digest = md.digest(signatureBytes)
             val signatureHex = digest.joinToString(":") { "%02X".format(it) }
 
