@@ -4,28 +4,17 @@ import android.content.Context
 import android.content.pm.PackageManager
 import java.security.MessageDigest
 
-/**
- * يتحقق من عدم التلاعب بتوقيع التطبيق.
- */
 object TamperDetector {
-    private const val EXPECTED_SIGNATURE = "EXPECTED_SIGNATURE_HASH" // استبدل بالتجزئة الحقيقية في الإصدار النهائي
+    private const val EXPECTED_SIGNATURE = "EXPECTED_SIGNATURE_HASH"
 
     fun isAppTampered(context: Context): Boolean {
         return try {
-            val packageInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                context.packageManager.getPackageInfo(
-                    context.packageName,
-                    PackageManager.GET_SIGNING_CERTIFICATES
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.getPackageInfo(
-                    context.packageName,
-                    PackageManager.GET_SIGNATURES
-                )
-            }
+            val packageInfo = context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_SIGNING_CERTIFICATES
+            )
 
-            val signatures: Array<out java.security.Signature>? = 
+            val signatures: Array<out android.content.pm.Signature>? =
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                     packageInfo.signingInfo?.apkContentsSigners
                 } else {
@@ -40,7 +29,7 @@ object TamperDetector {
 
             signatureHex != EXPECTED_SIGNATURE
         } catch (e: Exception) {
-            true // لا يمكن التحقق -> نفترض التلاعب
+            true
         }
     }
 }
