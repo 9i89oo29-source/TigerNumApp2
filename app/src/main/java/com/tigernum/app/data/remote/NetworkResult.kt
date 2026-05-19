@@ -1,11 +1,9 @@
 package com.tigernum.app.data.remote
 
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-
 sealed class NetworkResult<out T> {
     data class Success<T>(val data: T) : NetworkResult<T>()
     data class Error(val exception: NetworkException) : NetworkResult<Nothing>()
+    object Loading : NetworkResult<Nothing>()
 }
 
 sealed class NetworkException(override val message: String, cause: Throwable? = null) : Exception(message, cause) {
@@ -20,8 +18,8 @@ sealed class NetworkException(override val message: String, cause: Throwable? = 
         fun fromThrowable(throwable: Throwable): NetworkException {
             return when (throwable) {
                 is NetworkException -> throwable
-                is ConnectException -> NoInternet(throwable)
-                is SocketTimeoutException -> Timeout(throwable)
+                is java.net.ConnectException -> NoInternet(throwable)
+                is java.net.SocketTimeoutException -> Timeout(throwable)
                 is retrofit2.HttpException -> {
                     val code = throwable.code()
                     val msg = throwable.message() ?: "HTTP Error"
