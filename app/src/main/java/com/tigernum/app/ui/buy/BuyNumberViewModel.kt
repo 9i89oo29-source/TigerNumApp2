@@ -30,9 +30,6 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
 
     private var pollingJob: Job? = null
 
-    /**
-     * يبدأ عملية شراء رقم جديد ثم ينتقل تلقائياً إلى استقبال SMS.
-     */
     fun buyNumber(provider: String, serviceId: String, countryCode: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isBuying = true, error = null, order = null, smsMessage = null) }
@@ -41,19 +38,16 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
                 is NetworkResult.Success -> {
                     val order = result.data
                     _uiState.update { it.copy(isBuying = false, order = order) }
-                    // بدء استطلاع SMS فوراً
                     startPolling(order.orderId)
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(isBuying = false, error = result.exception.message) }
                 }
+                is NetworkResult.Loading -> { /* still buying */ }
             }
         }
     }
 
-    /**
-     * يستطلع الخادم الخلفي حتى وصول SMS أو حدوث خطأ/مهلة.
-     */
     private fun startPolling(orderId: String) {
         pollingJob?.cancel()
         _uiState.update { it.copy(isPolling = true, error = null, smsMessage = null) }
@@ -69,30 +63,21 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
                         _uiState.update { it.copy(isPolling = false, error = result.exception.message) }
                         pollingJob?.cancel()
                     }
-                    is NetworkResult.Loading -> { /* ما زلنا ننتظر */ }
+                    is NetworkResult.Loading -> { /* waiting */ }
                 }
             }
         }
     }
 
-    /**
-     * إعادة المحاولة: إما شراء الرقم مرة أخرى (إذا لم يكن لدينا Order بعد) أو متابعة الاستطلاع.
-     */
     fun retry() {
         val currentState = _uiState.value
         if (currentState.order != null) {
-            // توجد طلبية، نعيد الاستطلاع
             startPolling(currentState.order.orderId)
         } else {
-            // لا توجد طلبية – لا يمكننا إعادة المحاولة تلقائياً بدون معرفة المدخلات السابقة
-            // يمكن إضافة دالة retryBuy(provider, serviceId, countryCode) إذا لزم الأمر
             _uiState.update { it.copy(error = null) }
         }
     }
 
-    /**
-     * إيقاف الاستطلاع (عند مغادرة الشاشة).
-     */
     fun cancelPolling() {
         pollingJob?.cancel()
         _uiState.update { it.copy(isPolling = false) }
