@@ -5,7 +5,6 @@ import com.tigernum.app.data.remote.NetworkException
 import com.tigernum.app.data.remote.NetworkResult
 import com.tigernum.app.data.remote.RetrofitProvider
 import com.tigernum.app.data.remote.dto.BuyRequest
-import com.tigernum.app.data.remote.dto.ProviderDto
 import com.tigernum.app.domain.model.*
 import com.tigernum.app.util.DeviceIdProvider
 import kotlinx.coroutines.delay
@@ -27,7 +26,7 @@ class BotRepository(
 
     // --------------- Providers ---------------
     suspend fun getProviders(): NetworkResult<List<Provider>> {
-        return safeApiCall { api.getProviders().map { (it as ProviderDto).toDomain() } }
+        return safeApiCall { api.getProviders().map { it.toDomain() } }
     }
 
     // --------------- Services ---------------
