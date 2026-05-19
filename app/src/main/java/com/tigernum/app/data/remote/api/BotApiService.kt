@@ -11,6 +11,9 @@ interface BotApiService {
     @GET("countries")
     suspend fun getCountries(): List<CountryDto>
 
+    @GET("providers")
+    suspend fun getProviders(): List<ProviderDto>
+
     @GET("balance")
     suspend fun getBalance(): BalanceDto
 
