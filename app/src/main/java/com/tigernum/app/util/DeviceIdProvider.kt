@@ -5,19 +5,10 @@ import android.content.pm.PackageManager
 import com.tigernum.app.data.local.DeviceManager
 import java.security.MessageDigest
 
-/**
- * يوفّر بصمة جهاز مشفّرة (SHA-256) تتكون من:
- * - ANDROID_ID
- * - توقيع التطبيق (App Signature)
- * - طابع زمني لأول تثبيت
- */
 class DeviceIdProvider(private val context: Context) {
 
     private val deviceManager = DeviceManager(context)
 
-    /**
-     * يعيد بصمة الجهاز النهائية (hex string) لاستخدامها في الطلبات.
-     */
     fun getHashedFingerprint(): String {
         val androidId = deviceManager.getAndroidId()
         val signature = getAppSignature()
@@ -27,25 +18,14 @@ class DeviceIdProvider(private val context: Context) {
         return hashString(raw)
     }
 
-    /**
-     * يستخرج توقيع التطبيق (SHA-256) من شهادة التوقيع.
-     */
     private fun getAppSignature(): String {
         return try {
-            val packageInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                context.packageManager.getPackageInfo(
-                    context.packageName,
-                    PackageManager.GET_SIGNING_CERTIFICATES
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.getPackageInfo(
-                    context.packageName,
-                    PackageManager.GET_SIGNATURES
-                )
-            }
+            val packageInfo = context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_SIGNING_CERTIFICATES
+            )
 
-            val signatures: Array<out java.security.Signature>? = 
+            val signatures: Array<out android.content.pm.Signature>? =
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                     packageInfo.signingInfo?.apkContentsSigners
                 } else {
