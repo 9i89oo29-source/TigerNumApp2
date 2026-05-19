@@ -11,24 +11,22 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-/**
- * Single source of truth for all bot backend data.
- * Uses the bot API through Retrofit and maps DTOs to domain models.
- */
 class BotRepository(
     private val deviceIdProvider: DeviceIdProvider
 ) {
     private val api = RetrofitProvider.getApiService(deviceIdProvider)
 
-    /**
-     * Generic wrapper that catches network exceptions and returns [NetworkResult].
-     */
     private suspend fun <T> safeApiCall(call: suspend () -> T): NetworkResult<T> {
         return try {
             NetworkResult.Success(call())
         } catch (e: Exception) {
             NetworkResult.Error(NetworkException.fromThrowable(e))
         }
+    }
+
+    // --------------- Providers ---------------
+    suspend fun getProviders(): NetworkResult<List<Provider>> {
+        return safeApiCall { api.getProviders().map { it.toDomain() } }
     }
 
     // --------------- Services ---------------
@@ -49,39 +47,33 @@ class BotRepository(
     // --------------- Buy Number ---------------
     suspend fun buyNumber(serviceId: String, countryCode: String): NetworkResult<Order> {
         val request = BuyRequest(serviceId = serviceId, countryCode = countryCode)
-        return safeApiCall { api.buyNumber(request) }.let { result ->
-            when (result) {
-                is NetworkResult.Success -> {
-                    // BuyResponse fields: orderId, phoneNumber, status, expiresAt
-                    val response = result.data
-                    NetworkResult.Success(
-                        Order(
-                            orderId = response.orderId,
-                            phoneNumber = response.phoneNumber,
-                            serviceName = "", // not returned; we can fill later or ignore
-                            status = OrderStatus.PENDING,
-                            smsCode = null,
-                            createdAt = "",
-                            expiresAt = response.expiresAt
-                        )
+        return when (val apiResult = safeApiCall { api.buyNumber(request) }) {
+            is NetworkResult.Success -> {
+                val response = apiResult.data
+                NetworkResult.Success(
+                    Order(
+                        orderId = response.orderId,
+                        phoneNumber = response.phoneNumber,
+                        serviceName = "",
+                        status = OrderStatus.PENDING,
+                        smsCode = null,
+                        createdAt = "",
+                        expiresAt = response.expiresAt
                     )
-                }
-                is NetworkResult.Error -> NetworkResult.Error(result.exception)
+                )
             }
+            is NetworkResult.Error -> NetworkResult.Error(apiResult.exception)
+            is NetworkResult.Loading -> NetworkResult.Loading
         }
     }
 
-    // --------------- SMS Polling ---------------
+    // --------------- SMS Status ---------------
     suspend fun getSmsStatus(orderId: String): NetworkResult<SmsMessage> {
         return safeApiCall { api.getSms(orderId).toDomain() }
     }
 
     /**
-     * Polls the backend for SMS code until received or timeout.
-     * @param orderId The order identifier to poll.
-     * @param intervalMillis Polling interval.
-     * @param maxAttempts Maximum attempts before timeout.
-     * @return Flow emitting loading, success or error.
+     * Polls backend until SMS arrives or timeout.
      */
     fun pollSms(
         orderId: String,
@@ -102,6 +94,7 @@ class BotRepository(
                     emit(NetworkResult.Error(result.exception))
                     return@flow
                 }
+                is NetworkResult.Loading -> { /* continue polling */ }
             }
             delay(intervalMillis)
         }
