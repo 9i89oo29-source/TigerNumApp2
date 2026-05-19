@@ -1,10 +1,12 @@
 package com.tigernum.app.ui.home
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tigernum.app.data.remote.NetworkResult
 import com.tigernum.app.data.repository.BotRepository
 import com.tigernum.app.domain.model.*
+import com.tigernum.app.util.DeviceIdProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,9 +23,10 @@ data class HomeUiState(
     val error: String? = null
 )
 
-class HomeViewModel(
-    private val repository: BotRepository
-) : ViewModel() {
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val deviceIdProvider = DeviceIdProvider(application)
+    private val repository = BotRepository(deviceIdProvider)
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
