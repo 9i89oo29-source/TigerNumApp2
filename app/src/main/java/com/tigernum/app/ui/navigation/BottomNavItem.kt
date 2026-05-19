@@ -12,9 +12,6 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tigernum.app.R
 
-/**
- * Represents an item in the bottom navigation bar.
- */
 data class BottomNavItem(
     val screen: Screen,
     val labelResId: Int,
@@ -22,9 +19,6 @@ data class BottomNavItem(
     val unselectedIcon: ImageVector
 )
 
-/**
- * The four main bottom navigation destinations.
- */
 val bottomNavItems = listOf(
     BottomNavItem(
         screen = Screen.Home,
@@ -33,10 +27,7 @@ val bottomNavItems = listOf(
         unselectedIcon = Icons.Outlined.Home
     ),
     BottomNavItem(
-        screen = Screen.BuyNumber.createRoute("", "", "").substringBeforeLast("/"),
-        // Actually need a dedicated Buy landing; best to use a base route.
-        // Instead, define a dedicated route for the bottom nav.
-        screen = Screen.Home, // Placeholder fix: we create a dedicated BuyNav screen below.
+        screen = Screen.BuyLanding,
         labelResId = R.string.nav_buy,
         selectedIcon = Icons.Filled.ShoppingCart,
         unselectedIcon = Icons.Outlined.ShoppingCart
