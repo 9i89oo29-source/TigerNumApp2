@@ -5,19 +5,26 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Adds device authentication header to every API request.
- * The backend uses this hashed fingerprint to identify the device/user.
+ * Adds device authentication header and JWT token to every API request.
  */
-class DeviceAuthInterceptor(private val deviceIdProvider: DeviceIdProvider) : Interceptor {
+class DeviceAuthInterceptor(
+    private val deviceIdProvider: DeviceIdProvider,
+    private val tokenProvider: () -> String?
+) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         val hashedFingerprint = deviceIdProvider.getHashedFingerprint()
 
-        val newRequest = originalRequest.newBuilder()
+        val builder = originalRequest.newBuilder()
             .header("X-Device-Fingerprint", hashedFingerprint)
-            .build()
 
-        return chain.proceed(newRequest)
+        // إضافة رمز JWT إذا كان موجوداً
+        val token = tokenProvider()
+        if (!token.isNullOrBlank()) {
+            builder.header("Authorization", "Bearer $token")
+        }
+
+        return chain.proceed(builder.build())
     }
 }
