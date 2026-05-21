@@ -1,5 +1,6 @@
 package com.tigernum.app.ui.home
 
+import com.tigernum.app.data.remote.api.DeviceAuthRequest
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
