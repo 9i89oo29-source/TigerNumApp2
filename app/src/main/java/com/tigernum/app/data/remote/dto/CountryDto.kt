@@ -5,8 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CountryDto(
-    val code: String,         // e.g., "+20"
-    val name: String,         // e.g., "مصر"
-    val flag: String,         // e.g., "🇪🇬"
-    @SerialName("dial_code") val dialCode: String = code
+    val code: String,
+    val name: String,
+    @SerialName("nameAr") val nameAr: String? = null,
+    val flag: String? = null,
+    @SerialName("dialCode") val dialCode: String = ""
 )
