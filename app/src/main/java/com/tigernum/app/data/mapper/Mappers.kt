@@ -12,8 +12,8 @@ fun ServiceDto.toDomain() = Service(
 
 fun CountryDto.toDomain() = Country(
     code = code,
-    name = name,
-    flag = flag,
+    name = nameAr ?: name,   // إذا لم يوجد nameAr نستخدم name
+    flag = flag ?: "",       // إذا كان flag null نضع نصاً فارغاً
     dialCode = dialCode
 )
 
