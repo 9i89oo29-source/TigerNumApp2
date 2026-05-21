@@ -11,11 +11,6 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 import java.util.concurrent.TimeUnit
 
 object RetrofitProvider {
@@ -30,8 +25,9 @@ object RetrofitProvider {
         coerceInputValues = true
     }
 
-    // يمكن إضافة CertificatePinner عند الحاجة
-
+    /**
+     * ينشئ عميل OkHttp جديد في كل مرة لضمان استخدام أحدث مزود للتوكن.
+     */
     private fun createOkHttpClient(
         deviceIdProvider: DeviceIdProvider,
         tokenProvider: () -> String?
@@ -50,21 +46,19 @@ object RetrofitProvider {
             .build()
     }
 
-    private var apiService: BotApiService? = null
-
+    /**
+     * يُعيد واجهة API جديدة في كل مرة، مما يضمن أن مزود التوكن المُمرّر هو المستخدم فعلياً.
+     */
     fun getApiService(
         deviceIdProvider: DeviceIdProvider,
         tokenProvider: () -> String? = { null }
     ): BotApiService {
-        if (apiService == null) {
-            val client = createOkHttpClient(deviceIdProvider, tokenProvider)
-            val retrofit = Retrofit.Builder()
-                .baseUrl(BuildConfig.BOT_API_BASE_URL)
-                .client(client)
-                .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-                .build()
-            apiService = retrofit.create(BotApiService::class.java)
-        }
-        return apiService!!
+        val client = createOkHttpClient(deviceIdProvider, tokenProvider)
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BuildConfig.BOT_API_BASE_URL)
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+        return retrofit.create(BotApiService::class.java)
     }
 }
