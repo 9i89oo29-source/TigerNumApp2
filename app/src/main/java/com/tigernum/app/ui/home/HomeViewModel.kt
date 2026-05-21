@@ -56,7 +56,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 deviceManager.saveString("jwt_token", response.accessToken)
             } catch (e: Exception) {
-                // تجاهل أخطاء المصادقة الأولية – الخادم قد يقبل الطلبات بدونها لبعض الوقت
+                _uiState.update { it.copy(error = "Auth failed: ${e.message}") }
             }
 
             // 2. تحميل البيانات
