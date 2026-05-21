@@ -26,7 +26,6 @@ class OrdersViewModel(application: Application) : AndroidViewModel(application) 
     private val deviceIdProvider = DeviceIdProvider(application)
     private val deviceManager = DeviceManager(application)
 
-    // نستخدم api جديدة مع tokenProvider
     private val api: BotApiService = RetrofitProvider.getApiService(
         deviceIdProvider = deviceIdProvider,
         tokenProvider = { deviceManager.getString("jwt_token", null) }
@@ -58,6 +57,7 @@ class OrdersViewModel(application: Application) : AndroidViewModel(application) 
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(isLoading = false, error = result.exception.message) }
                 }
+                is NetworkResult.Loading -> { /* حالة تحميل – لا نفعل شيئاً */ }
             }
         }
     }
