@@ -22,7 +22,7 @@ android {
         }
 
         // Base URL for the Telegram bot backend
-        buildConfigField("String", "BOT_API_BASE_URL", "\"https://your-bot-backend.com/api/\"")
+        buildConfigField("String", "BOT_API_BASE_URL", "\"https://abunumapp.com/api/v1/\"")
     }
 
     buildTypes {
