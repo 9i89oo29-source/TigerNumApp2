@@ -8,7 +8,6 @@ import com.tigernum.app.data.remote.NetworkException
 import com.tigernum.app.data.remote.RetrofitProvider
 import com.tigernum.app.data.remote.api.BotApiService
 import com.tigernum.app.data.remote.dto.BuyRequest
-import com.tigernum.app.data.remote.dto.BuyResponse
 import com.tigernum.app.data.remote.dto.SmsResponse
 import com.tigernum.app.data.local.DeviceManager
 import com.tigernum.app.domain.model.Order
@@ -33,7 +32,6 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
     private val deviceIdProvider = DeviceIdProvider(application)
     private val deviceManager = DeviceManager(application)
 
-    // ننشئ api جديدة مع tokenProvider الذي يقرأ التوكن الحالي
     private val api: BotApiService = RetrofitProvider.getApiService(
         deviceIdProvider = deviceIdProvider,
         tokenProvider = { deviceManager.getString("jwt_token", null) }
@@ -73,6 +71,7 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(isBuying = false, error = result.exception.message) }
                 }
+                is NetworkResult.Loading -> { /* حالة تحميل – لا نفعل شيئاً */ }
             }
         }
     }
@@ -98,9 +97,6 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    /**
-     * تنفيذ الاستقصاء محلياً بدلاً من BotRepository.
-     */
     private fun pollSms(
         orderId: String,
         intervalMillis: Long = 5000L,
