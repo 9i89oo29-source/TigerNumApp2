@@ -1,15 +1,22 @@
 package com.tigernum.app.ui.home
 
-import com.tigernum.app.data.remote.api.DeviceAuthRequest
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tigernum.app.data.local.DeviceManager
+import com.tigernum.app.data.remote.NetworkException
 import com.tigernum.app.data.remote.NetworkResult
 import com.tigernum.app.data.remote.RetrofitProvider
 import com.tigernum.app.data.remote.api.BotApiService
-import com.tigernum.app.data.remote.dto.*
-import com.tigernum.app.data.local.DeviceManager
-import com.tigernum.app.domain.model.*
+import com.tigernum.app.data.remote.api.DeviceAuthRequest
+import com.tigernum.app.data.remote.dto.BalanceDto
+import com.tigernum.app.data.remote.dto.CountryDto
+import com.tigernum.app.data.remote.dto.ProviderDto
+import com.tigernum.app.data.remote.dto.ServiceDto
+import com.tigernum.app.domain.model.Country
+import com.tigernum.app.domain.model.Provider
+import com.tigernum.app.domain.model.Service
 import com.tigernum.app.util.DeviceIdProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +39,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val deviceManager = DeviceManager(application)
     private val deviceIdProvider = DeviceIdProvider(application)
 
+    // إنشاء api مع tokenProvider الذي يقرأ التوكن من DeviceManager في كل مرة
     private val api: BotApiService = RetrofitProvider.getApiService(
         deviceIdProvider = deviceIdProvider,
         tokenProvider = { deviceManager.getString("jwt_token", null) }
@@ -41,6 +49,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        Log.d("TigerNumApp", "HomeViewModel init – calling authenticateAndLoad")
         authenticateAndLoad()
     }
 
@@ -50,13 +59,24 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
             // 1. محاولة المصادقة
             try {
+                Log.d("TigerNumApp", "Getting hashed fingerprint...")
                 val fingerprint = deviceIdProvider.getHashedFingerprint()
+                Log.d("TigerNumApp", "Fingerprint: ${fingerprint.substring(0, 16)}...")
+
                 val response = api.authDevice(
                     DeviceAuthRequest(fingerprint = fingerprint)
                 )
                 deviceManager.saveString("jwt_token", response.accessToken)
+                Log.d("TigerNumApp", "Auth SUCCESS – token saved")
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = "Auth failed: ${e.message}") }
+                Log.e("TigerNumApp", "Auth FAILED: ${e.message}", e)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "فشلت المصادقة: ${e.message}"
+                    )
+                }
+                return@launch  // توقف عن تحميل البيانات إذا فشلت المصادقة
             }
 
             // 2. تحميل البيانات
@@ -64,44 +84,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun safeApiCall2() {
-        // دمجت في الخطوة التالية
-    }
-
     private fun loadData() {
         viewModelScope.launch {
-            val providersDeferred = async {
-                try {
-                    val list = api.getProviders()
-                    NetworkResult.Success(list.map { it.toDomain() })
-                } catch (e: Exception) {
-                    NetworkResult.Error(com.tigernum.app.data.remote.NetworkException.fromThrowable(e))
-                }
-            }
-            val countriesDeferred = async {
-                try {
-                    val list = api.getCountries()
-                    NetworkResult.Success(list.map { it.toDomain() })
-                } catch (e: Exception) {
-                    NetworkResult.Error(com.tigernum.app.data.remote.NetworkException.fromThrowable(e))
-                }
-            }
-            val servicesDeferred = async {
-                try {
-                    val list = api.getServices()
-                    NetworkResult.Success(list.map { it.toDomain() })
-                } catch (e: Exception) {
-                    NetworkResult.Error(com.tigernum.app.data.remote.NetworkException.fromThrowable(e))
-                }
-            }
-            val balanceDeferred = async {
-                try {
-                    val balanceDto = api.getBalance()
-                    NetworkResult.Success(balanceDto.balance)
-                } catch (e: Exception) {
-                    NetworkResult.Error(com.tigernum.app.data.remote.NetworkException.fromThrowable(e))
-                }
-            }
+            val providersDeferred = async { safeApiCall { api.getProviders().map { it.toDomain() } } }
+            val countriesDeferred = async { safeApiCall { api.getCountries().map { it.toDomain() } } }
+            val servicesDeferred = async { safeApiCall { api.getServices().map { it.toDomain() } } }
+            val balanceDeferred = async { safeApiCall { api.getBalance().balance } }
 
             val providersResult = providersDeferred.await()
             val countriesResult = countriesDeferred.await()
@@ -133,12 +121,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private suspend fun <T> safeApiCall(call: suspend () -> T): NetworkResult<T> {
+        return try {
+            NetworkResult.Success(call())
+        } catch (e: Exception) {
+            NetworkResult.Error(NetworkException.fromThrowable(e))
+        }
+    }
+
     fun refresh() {
         authenticateAndLoad()
     }
 }
 
-// دوال التحويل للنماذج (إن لم تكن موجودة)
+// دوال التحويل
 fun ServiceDto.toDomain() = Service(
     id = providerServiceId,
     name = name,
