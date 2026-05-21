@@ -4,7 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tigernum.app.data.remote.NetworkResult
-import com.tigernum.app.data.repository.BotRepository
+import com.tigernum.app.data.remote.RetrofitProvider
+import com.tigernum.app.data.remote.api.BotApiService
+import com.tigernum.app.data.remote.dto.*
+import com.tigernum.app.data.local.DeviceManager
 import com.tigernum.app.domain.model.*
 import com.tigernum.app.util.DeviceIdProvider
 import kotlinx.coroutines.async
@@ -25,24 +28,79 @@ data class HomeUiState(
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val deviceManager = DeviceManager(application)
     private val deviceIdProvider = DeviceIdProvider(application)
-    private val repository = BotRepository(deviceIdProvider)
+
+    private val api: BotApiService = RetrofitProvider.getApiService(
+        deviceIdProvider = deviceIdProvider,
+        tokenProvider = { deviceManager.getString("jwt_token", null) }
+    )
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        loadData()
+        authenticateAndLoad()
+    }
+
+    private fun authenticateAndLoad() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            // 1. محاولة المصادقة
+            try {
+                val fingerprint = deviceIdProvider.getHashedFingerprint()
+                val response = api.authDevice(
+                    DeviceAuthRequest(fingerprint = fingerprint)
+                )
+                deviceManager.saveString("jwt_token", response.accessToken)
+            } catch (e: Exception) {
+                // تجاهل أخطاء المصادقة الأولية – الخادم قد يقبل الطلبات بدونها لبعض الوقت
+            }
+
+            // 2. تحميل البيانات
+            loadData()
+        }
+    }
+
+    private suspend fun safeApiCall2() {
+        // دمجت في الخطوة التالية
     }
 
     private fun loadData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-
-            val providersDeferred = async { repository.getProviders() }
-            val countriesDeferred = async { repository.getCountries() }
-            val servicesDeferred = async { repository.getServices() }
-            val balanceDeferred = async { repository.getBalance() }
+            val providersDeferred = async {
+                try {
+                    val list = api.getProviders()
+                    NetworkResult.Success(list.map { it.toDomain() })
+                } catch (e: Exception) {
+                    NetworkResult.Error(com.tigernum.app.data.remote.NetworkException.fromThrowable(e))
+                }
+            }
+            val countriesDeferred = async {
+                try {
+                    val list = api.getCountries()
+                    NetworkResult.Success(list.map { it.toDomain() })
+                } catch (e: Exception) {
+                    NetworkResult.Error(com.tigernum.app.data.remote.NetworkException.fromThrowable(e))
+                }
+            }
+            val servicesDeferred = async {
+                try {
+                    val list = api.getServices()
+                    NetworkResult.Success(list.map { it.toDomain() })
+                } catch (e: Exception) {
+                    NetworkResult.Error(com.tigernum.app.data.remote.NetworkException.fromThrowable(e))
+                }
+            }
+            val balanceDeferred = async {
+                try {
+                    val balanceDto = api.getBalance()
+                    NetworkResult.Success(balanceDto.balance)
+                } catch (e: Exception) {
+                    NetworkResult.Error(com.tigernum.app.data.remote.NetworkException.fromThrowable(e))
+                }
+            }
 
             val providersResult = providersDeferred.await()
             val countriesResult = countriesDeferred.await()
@@ -75,6 +133,26 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refresh() {
-        loadData()
+        authenticateAndLoad()
     }
 }
+
+// دوال التحويل للنماذج (إن لم تكن موجودة)
+fun ServiceDto.toDomain() = Service(
+    id = providerServiceId,
+    name = name,
+    price = price.toDouble(),
+    available = available
+)
+
+fun CountryDto.toDomain() = Country(
+    code = code,
+    name = nameAr ?: name,
+    flag = flag ?: "",
+    dialCode = dialCode
+)
+
+fun ProviderDto.toDomain() = Provider(
+    id = id,
+    name = name
+)
