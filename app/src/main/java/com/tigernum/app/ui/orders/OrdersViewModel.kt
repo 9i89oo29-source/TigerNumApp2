@@ -3,9 +3,14 @@ package com.tigernum.app.ui.orders
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tigernum.app.data.local.DeviceManager
 import com.tigernum.app.data.remote.NetworkResult
-import com.tigernum.app.data.repository.BotRepository
+import com.tigernum.app.data.remote.NetworkException
+import com.tigernum.app.data.remote.RetrofitProvider
+import com.tigernum.app.data.remote.api.BotApiService
+import com.tigernum.app.data.remote.dto.OrderDto
 import com.tigernum.app.domain.model.Order
+import com.tigernum.app.domain.model.OrderStatus
 import com.tigernum.app.util.DeviceIdProvider
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -19,7 +24,13 @@ data class OrdersUiState(
 class OrdersViewModel(application: Application) : AndroidViewModel(application) {
 
     private val deviceIdProvider = DeviceIdProvider(application)
-    private val repository = BotRepository(deviceIdProvider)
+    private val deviceManager = DeviceManager(application)
+
+    // نستخدم api جديدة مع tokenProvider
+    private val api: BotApiService = RetrofitProvider.getApiService(
+        deviceIdProvider = deviceIdProvider,
+        tokenProvider = { deviceManager.getString("jwt_token", null) }
+    )
 
     private val _uiState = MutableStateFlow(OrdersUiState())
     val uiState: StateFlow<OrdersUiState> = _uiState.asStateFlow()
@@ -31,17 +42,38 @@ class OrdersViewModel(application: Application) : AndroidViewModel(application) 
     fun loadOrders() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            when (val result = repository.getOrders()) {
+
+            val result = try {
+                val list = api.getOrders()
+                NetworkResult.Success(list)
+            } catch (e: Exception) {
+                NetworkResult.Error(NetworkException.fromThrowable(e))
+            }
+
+            when (result) {
                 is NetworkResult.Success -> {
-                    _uiState.update { it.copy(isLoading = false, orders = result.data) }
+                    val orders = result.data.map { it.toDomain() }
+                    _uiState.update { it.copy(isLoading = false, orders = orders) }
                 }
                 is NetworkResult.Error -> {
-                    _uiState.update {
-                        it.copy(isLoading = false, error = result.exception.message)
-                    }
+                    _uiState.update { it.copy(isLoading = false, error = result.exception.message) }
                 }
-                is NetworkResult.Loading -> { /* just in case */ }
             }
         }
     }
+
+    private fun OrderDto.toDomain() = Order(
+        orderId = orderId,
+        phoneNumber = phoneNumber,
+        serviceName = serviceName,
+        status = when (status.uppercase()) {
+            "PENDING" -> OrderStatus.PENDING
+            "COMPLETED" -> OrderStatus.COMPLETED
+            "CANCELLED" -> OrderStatus.CANCELLED
+            else -> OrderStatus.UNKNOWN
+        },
+        smsCode = smsCode,
+        createdAt = createdAt,
+        expiresAt = expiresAt
+    )
 }
