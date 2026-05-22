@@ -29,7 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuyNumberScreen(
-    provider: String,
+    providerSlug: String,
     serviceId: String,
     countryCode: String,
     viewModel: BuyNumberViewModel = viewModel()
@@ -39,12 +39,10 @@ fun BuyNumberScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
-    // بدء عملية الشراء عند ظهور الشاشة
-    LaunchedEffect(provider, serviceId, countryCode) {
-        viewModel.buyNumber(provider, serviceId, countryCode)
+    LaunchedEffect(providerSlug, serviceId, countryCode) {
+        viewModel.buyNumber(providerSlug = providerSlug, serviceId = serviceId, countryCode = countryCode)
     }
 
-    // عرض الأخطاء في Snackbar
     LaunchedEffect(uiState.error) {
         uiState.error?.let { error ->
             snackbarHostState.showSnackbar(
@@ -72,17 +70,11 @@ fun BuyNumberScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // مؤشر الشراء
             if (uiState.isBuying) {
                 CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                Text(
-                    text = "جارٍ شراء الرقم...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Text("جارٍ شراء الرقم...")
             }
 
-            // عرض الرقم المشترى
             if (uiState.order != null) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -92,22 +84,14 @@ fun BuyNumberScreen(
                         modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Phone,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "الرقم الذي تم شراؤه",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("الرقم الذي تم شراؤه", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(8.dp))
                         SelectionContainer {
                             Text(
                                 text = uiState.order!!.phoneNumber,
-                                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 28.sp),
+                                style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
                                 textAlign = TextAlign.Center,
@@ -123,10 +107,7 @@ fun BuyNumberScreen(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = "نسخ الرقم"
-                            )
+                            Icon(Icons.Default.ContentCopy, contentDescription = "نسخ الرقم")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("نسخ الرقم")
                         }
@@ -134,46 +115,26 @@ fun BuyNumberScreen(
                 }
             }
 
-            // حالة استطلاع SMS
             if (uiState.isPolling) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     CircularProgressIndicator(modifier = Modifier.size(40.dp))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "في انتظار وصول الرسالة...",
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center
-                    )
+                    Text("في انتظار وصول الرسالة...", textAlign = TextAlign.Center)
                 }
             }
 
-            // عرض SMS عند الوصول
             if (uiState.smsMessage != null && uiState.smsMessage?.smsCode != null) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Sms,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        Icon(Icons.Default.Sms, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "تم استلام رمز التحقق!",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        Text("تم استلام رمز التحقق!", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                         Spacer(modifier = Modifier.height(8.dp))
                         SelectionContainer {
                             Text(
@@ -202,25 +163,11 @@ fun BuyNumberScreen(
                 }
             }
 
-            // عرض خطأ (غير معروض في Snackbar) مع زر إعادة المحاولة
             if (uiState.error != null && !uiState.isBuying && !uiState.isPolling && uiState.smsMessage == null) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "فشلت العملية",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold
-                    )
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text("فشلت العملية", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = uiState.error ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
+                    Text(uiState.error ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedButton(
                         onClick = { viewModel.retry() },
@@ -235,7 +182,6 @@ fun BuyNumberScreen(
         }
     }
 
-    // إلغاء الاستطلاع عند مغادرة الشاشة
     DisposableEffect(lifecycle) {
         onDispose {
             viewModel.cancelPolling()

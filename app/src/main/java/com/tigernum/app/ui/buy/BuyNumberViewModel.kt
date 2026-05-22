@@ -42,13 +42,13 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
 
     private var pollingJob: Job? = null
 
-    fun buyNumber(provider: String, serviceId: String, countryCode: String) {
+    fun buyNumber(providerSlug: String, serviceId: String, countryCode: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isBuying = true, error = null, order = null, smsMessage = null) }
 
             val result = try {
-                val response = api.buyNumber(BuyRequest(serviceId = serviceId, countryCode = countryCode))
-                NetworkResult.Success(response)
+                val response = api.buyNumber(BuyRequest(serviceId = serviceId, countryCode = countryCode, providerSlug = providerSlug))
+                NetworkResult.Success(response.data)
             } catch (e: Exception) {
                 NetworkResult.Error(NetworkException.fromThrowable(e))
             }
@@ -71,7 +71,7 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(isBuying = false, error = result.exception.message) }
                 }
-                is NetworkResult.Loading -> { /* حالة تحميل – لا نفعل شيئاً */ }
+                is NetworkResult.Loading -> {}
             }
         }
     }
@@ -91,7 +91,7 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
                         _uiState.update { it.copy(isPolling = false, error = result.exception.message) }
                         pollingJob?.cancel()
                     }
-                    is NetworkResult.Loading -> { /* waiting */ }
+                    is NetworkResult.Loading -> {}
                 }
             }
         }
@@ -106,7 +106,7 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
         repeat(maxAttempts) {
             val result = try {
                 val smsResp = api.getSms(orderId)
-                NetworkResult.Success(smsResp)
+                NetworkResult.Success(smsResp.data)
             } catch (e: Exception) {
                 NetworkResult.Error(NetworkException.fromThrowable(e))
             }
@@ -127,7 +127,7 @@ class BuyNumberViewModel(application: Application) : AndroidViewModel(applicatio
                     emit(NetworkResult.Error(result.exception))
                     return@flow
                 }
-                is NetworkResult.Loading -> { /* continue */ }
+                is NetworkResult.Loading -> {}
             }
             delay(intervalMillis)
         }

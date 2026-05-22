@@ -39,7 +39,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val deviceManager = DeviceManager(application)
     private val deviceIdProvider = DeviceIdProvider(application)
 
-    // إنشاء api مع tokenProvider الذي يقرأ التوكن من DeviceManager في كل مرة
     private val api: BotApiService = RetrofitProvider.getApiService(
         deviceIdProvider = deviceIdProvider,
         tokenProvider = { deviceManager.getString("jwt_token", null) }
@@ -57,39 +56,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            // 1. محاولة المصادقة
             try {
-                Log.d("TigerNumApp", "Getting hashed fingerprint...")
                 val fingerprint = deviceIdProvider.getHashedFingerprint()
                 Log.d("TigerNumApp", "Fingerprint: ${fingerprint.substring(0, 16)}...")
-
-                val response = api.authDevice(
-                    DeviceAuthRequest(fingerprint = fingerprint)
-                )
-                deviceManager.saveString("jwt_token", response.accessToken)
+                val response = api.authDevice(DeviceAuthRequest(fingerprint = fingerprint))
+                deviceManager.saveString("jwt_token", response.data.accessToken)
                 Log.d("TigerNumApp", "Auth SUCCESS – token saved")
             } catch (e: Exception) {
                 Log.e("TigerNumApp", "Auth FAILED: ${e.message}", e)
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "فشلت المصادقة: ${e.message}"
-                    )
-                }
-                return@launch  // توقف عن تحميل البيانات إذا فشلت المصادقة
+                _uiState.update { it.copy(isLoading = false, error = "فشلت المصادقة: ${e.message}") }
+                return@launch
             }
 
-            // 2. تحميل البيانات
             loadData()
         }
     }
 
     private fun loadData() {
         viewModelScope.launch {
-            val providersDeferred = async { safeApiCall { api.getProviders().map { it.toDomain() } } }
-            val countriesDeferred = async { safeApiCall { api.getCountries().map { it.toDomain() } } }
-            val servicesDeferred = async { safeApiCall { api.getServices().map { it.toDomain() } } }
-            val balanceDeferred = async { safeApiCall { api.getBalance().balance } }
+            val providersDeferred = async { safeApiCall { api.getProviders().data.map { it.toDomain() } } }
+            val countriesDeferred = async { safeApiCall { api.getCountries().data.map { it.toDomain() } } }
+            val servicesDeferred = async { safeApiCall { api.getServices().data.map { it.toDomain() } } }
+            val balanceDeferred = async { safeApiCall { api.getBalance().data.balance } }
 
             val providersResult = providersDeferred.await()
             val countriesResult = countriesDeferred.await()
@@ -134,7 +122,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 }
 
-// دوال التحويل
 fun ServiceDto.toDomain() = Service(
     id = providerServiceId,
     name = name,

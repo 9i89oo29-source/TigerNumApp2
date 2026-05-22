@@ -39,25 +39,22 @@ fun AppNavGraph(
                 slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(300))
         }
     ) {
-        // Home
         composable(Screen.Home.route) {
             HomeScreen(
                 onBuyClick = { provider, country, service ->
-                    val route = Screen.BuyNumber.createRoute(provider.name, service.id, country.dialCode)
+                    val route = Screen.BuyNumber.createRoute(provider.id, service.id, country.dialCode)
                     navController.navigate(route)
                 }
             )
         }
 
-        // Buy Landing -> يعيد التوجيه إلى BuyNumber مع قيم افتراضية
         composable(Screen.BuyLanding.route) {
-            val defaultRoute = Screen.BuyNumber.createRoute("Hero-SMS", "wa", "+20")
+            val defaultRoute = Screen.BuyNumber.createRoute("hero-sms", "wa", "+20")
             navController.navigate(defaultRoute) {
                 popUpTo(Screen.Home.route) { inclusive = false }
             }
         }
 
-        // Buy Number مع وسائط
         composable(
             route = Screen.BuyNumber.route,
             arguments = listOf(
@@ -66,27 +63,24 @@ fun AppNavGraph(
                 navArgument("countryCode") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val provider = backStackEntry.arguments?.getString("provider") ?: "Hero-SMS"
+            val providerSlug = backStackEntry.arguments?.getString("provider") ?: "hero-sms"
             val serviceId = backStackEntry.arguments?.getString("serviceId") ?: ""
             val countryCode = backStackEntry.arguments?.getString("countryCode") ?: ""
             BuyNumberScreen(
-                provider = provider,
+                providerSlug = providerSlug,
                 serviceId = serviceId,
                 countryCode = countryCode
             )
         }
 
-        // Orders
         composable(Screen.Orders.route) {
             OrdersScreen()
         }
 
-        // Instructions
         composable(Screen.Instructions.route) {
             InstructionsScreen()
         }
 
-        // Settings
         composable(Screen.Settings.route) {
             SettingsScreen()
         }

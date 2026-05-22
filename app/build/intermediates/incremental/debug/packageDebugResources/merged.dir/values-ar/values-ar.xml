@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">تايجر نمبر</string>
+    <string name="buy_number">شراء رقم</string>
+    <string name="country">الدولة</string>
+    <string name="error_unknown">حدث خطأ غير معروف</string>
+    <string name="nav_buy">شراء رقم</string>
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_instructions">التعليمات</string>
+    <string name="nav_orders">الطلبات</string>
+    <string name="nav_settings">الإعدادات</string>
+    <string name="provider">المزوّد</string>
+    <string name="select_country">اختر الدولة</string>
+    <string name="select_provider">اختر المزوّد</string>
+    <string name="select_service">اختر الخدمة</string>
+    <string name="service">الخدمة</string>
+</resources>

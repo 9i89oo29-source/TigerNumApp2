@@ -43,7 +43,7 @@ class OrdersViewModel(application: Application) : AndroidViewModel(application) 
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             val result = try {
-                val list = api.getOrders()
+                val list = api.getOrders().data
                 NetworkResult.Success(list)
             } catch (e: Exception) {
                 NetworkResult.Error(NetworkException.fromThrowable(e))
@@ -57,7 +57,7 @@ class OrdersViewModel(application: Application) : AndroidViewModel(application) 
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(isLoading = false, error = result.exception.message) }
                 }
-                is NetworkResult.Loading -> { /* حالة تحميل – لا نفعل شيئاً */ }
+                is NetworkResult.Loading -> {}
             }
         }
     }

@@ -1,0 +1,23 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+string buy_number
+string country
+string error_unknown
+string nav_buy
+string nav_home
+string nav_instructions
+string nav_orders
+string nav_settings
+string provider
+string select_country
+string select_provider
+string select_service
+string service
+style Theme.TigerNumApp
+xml data_extraction_rules
+xml file_paths
