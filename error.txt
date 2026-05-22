@@ -34,48 +34,7 @@
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:29:49 Unresolved reference 'map'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:29:53 Overload resolution ambiguity between candidates:
-fun ServiceDto.toDomain(): Service
-fun CountryDto.toDomain(): Country
-fun ProviderDto.toDomain(): Provider
-fun OrderDto.toDomain(): Order
-fun SmsResponse.toDomain(): SmsMessage
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:29:55 Unresolved reference 'it'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:34:48 Unresolved reference 'map'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:34:52 Overload resolution ambiguity between candidates:
-fun ServiceDto.toDomain(): Service
-fun CountryDto.toDomain(): Country
-fun ProviderDto.toDomain(): Provider
-fun OrderDto.toDomain(): Order
-fun SmsResponse.toDomain(): SmsMessage
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:34:54 Unresolved reference 'it'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:39:49 Unresolved reference 'map'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:39:53 Overload resolution ambiguity between candidates:
-fun ServiceDto.toDomain(): Service
-fun CountryDto.toDomain(): Country
-fun ProviderDto.toDomain(): Provider
-fun OrderDto.toDomain(): Order
-fun SmsResponse.toDomain(): SmsMessage
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:39:55 Unresolved reference 'it'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:44:47 Unresolved reference 'balance'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:55:44 Unresolved reference 'orderId'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:56:48 Unresolved reference 'phoneNumber'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:61:46 Unresolved reference 'expiresAt'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:72:50 None of the following candidates is applicable:
-fun ServiceDto.toDomain(): Service
-fun CountryDto.toDomain(): Country
-fun ProviderDto.toDomain(): Provider
-fun OrderDto.toDomain(): Order
-fun SmsResponse.toDomain(): SmsMessage
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:103:46 Unresolved reference 'map'.
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:103:50 Overload resolution ambiguity between candidates:
-fun ServiceDto.toDomain(): Service
-fun CountryDto.toDomain(): Country
-fun ProviderDto.toDomain(): Provider
-fun OrderDto.toDomain(): Order
-fun SmsResponse.toDomain(): SmsMessage
-e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/data/repository/BotRepository.kt:103:52 Unresolved reference 'it'.
+e: file:///workspaces/TigerNumApp2/app/src/main/java/com/tigernum/app/ui/buy/BuyNumberViewModel.kt:50:107 No parameter with name 'providerSlug' found.
 
 FAILURE: Build failed with an exception.
 
@@ -279,5 +238,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 11s
+BUILD FAILED in 6s
 29 actionable tasks: 1 executed, 28 up-to-date
